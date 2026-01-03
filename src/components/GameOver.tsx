@@ -3,6 +3,7 @@ import React from 'react';
 interface GameOverProps {
   score: number;
   distance: number;
+  landingAngle?: number;
   onRestart: () => void;
   onBackToMenu: () => void;
 }
@@ -10,6 +11,7 @@ interface GameOverProps {
 export const GameOver: React.FC<GameOverProps> = ({
   score,
   distance,
+  landingAngle,
   onRestart,
   onBackToMenu,
 }) => {
@@ -20,12 +22,13 @@ export const GameOver: React.FC<GameOverProps> = ({
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 2000,
+      pointerEvents: 'none',
     }}>
       <h1 style={{
         color: 'white',
@@ -40,7 +43,18 @@ export const GameOver: React.FC<GameOverProps> = ({
         borderRadius: '15px',
         marginBottom: '40px',
         minWidth: '300px',
+        pointerEvents: 'auto',
       }}>
+        {landingAngle !== undefined && (
+          <div style={{
+            color: '#ff6b6b',
+            fontSize: '28px',
+            marginBottom: '20px',
+            textAlign: 'center',
+          }}>
+            <strong>Landing Angle:</strong> {landingAngle.toFixed(1)}° (Max: 30°)
+          </div>
+        )}
         <div style={{
           color: 'white',
           fontSize: '24px',
@@ -60,6 +74,7 @@ export const GameOver: React.FC<GameOverProps> = ({
       <div style={{
         display: 'flex',
         gap: '20px',
+        pointerEvents: 'auto',
       }}>
         <button
           onClick={onRestart}

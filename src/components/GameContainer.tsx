@@ -6,7 +6,7 @@ import { HUD } from './HUD';
 
 interface GameContainerProps {
   character: Character;
-  onGameOver: (score: number, distance: number) => void;
+  onGameOver: (score: number, distance: number, landingAngle?: number) => void;
 }
 
 export const GameContainer: React.FC<GameContainerProps> = ({ character, onGameOver }) => {
@@ -15,6 +15,8 @@ export const GameContainer: React.FC<GameContainerProps> = ({ character, onGameO
   const [score, setScore] = useState(0);
   const [distance, setDistance] = useState(0);
   const [multiplier, setMultiplier] = useState(1);
+  const [currentTrickPoints, setCurrentTrickPoints] = useState(0);
+  const [currentTrickName, setCurrentTrickName] = useState('');
 
   useEffect(() => {
     if (!gameContainerRef.current) return;
@@ -44,8 +46,12 @@ export const GameContainer: React.FC<GameContainerProps> = ({ character, onGameO
           setDistance(newDistance);
           setMultiplier(newMultiplier);
         },
-        onGameOver: (finalScore: number, finalDistance: number) => {
-          onGameOver(finalScore, finalDistance);
+        onTrickUpdate: (points: number, trickName: string) => {
+          setCurrentTrickPoints(points);
+          setCurrentTrickName(trickName);
+        },
+        onGameOver: (finalScore: number, finalDistance: number, landingAngle?: number) => {
+          onGameOver(finalScore, finalDistance, landingAngle);
         },
       });
 
@@ -80,7 +86,13 @@ export const GameContainer: React.FC<GameContainerProps> = ({ character, onGameO
           alignItems: 'center',
         }}
       />
-      <HUD score={score} distance={distance} multiplier={multiplier} />
+      <HUD
+        score={score}
+        distance={distance}
+        multiplier={multiplier}
+        currentTrickPoints={currentTrickPoints}
+        currentTrickName={currentTrickName}
+      />
     </div>
   );
 };

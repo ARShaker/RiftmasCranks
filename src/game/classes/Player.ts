@@ -27,27 +27,13 @@ export class Player {
     this.scene = scene;
     this.character = character;
 
-    // Create sprite (simple rectangle for now)
-    this.sprite = scene.physics.add.sprite(x, y, '');
+    // Create sprite using the spritesheet
+    this.sprite = scene.physics.add.sprite(x, y, 'skier', 0);
 
-    // Create a simple rectangle graphic for the character with skis
-    const graphics = scene.add.graphics();
-    const width = 30 * character.height;
-    const height = 50 * character.height;
-    const skiThickness = 4;
+    // Scale based on character height
+    const scale = character.height * 1.5;
+    this.sprite.setScale(scale);
 
-    // Draw character body
-    graphics.fillStyle(parseInt(character.color.replace('#', '0x')), 1);
-    graphics.fillRect(0, 0, width, height);
-
-    // Draw skis (black line at bottom)
-    graphics.fillStyle(0x000000, 1);
-    graphics.fillRect(0, height - skiThickness, width, skiThickness);
-
-    graphics.generateTexture(`player_${character.id}`, width, height);
-    graphics.destroy();
-
-    this.sprite.setTexture(`player_${character.id}`);
     this.sprite.setCollideWorldBounds(false);
 
     // Apply physics properties based on character stats
@@ -57,11 +43,7 @@ export class Player {
   private applyCharacterPhysics(): void {
     // Heavier characters have more mass and fall faster
     // Taller characters have larger hitboxes
-    this.sprite.setScale(1);
-    this.sprite.body!.setSize(
-      30 * this.character.height,
-      50 * this.character.height
-    );
+    this.sprite.body!.setSize(32, 32); // Use the actual sprite size
   }
 
   public jump(): void {
