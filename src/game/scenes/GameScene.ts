@@ -86,18 +86,18 @@ export class GameScene extends Phaser.Scene {
 
   public preload(): void {
     // Load the skier images (3 separate files)
-    this.load.image('skier-ride', 'src/assets/skier_ride.png');
-    this.load.image('skier-jump', 'src/assets/skier_jump.png');
-    this.load.image('skier-trick', 'src/assets/skier_trick.png');
+    this.load.image('skier-ride', 'assets/skier_ride.png');
+    this.load.image('skier-jump', 'assets/skier_jump.png');
+    this.load.image('skier-trick', 'assets/skier_trick.png');
 
     // Load obstacle images
-    this.load.image('obstacle-rock', 'src/assets/rock.png');
-    this.load.image('obstacle-tree', 'src/assets/tree.png');
-    this.load.image('obstacle-sign', 'src/assets/trail_sign.png');
+    this.load.image('obstacle-rock', 'assets/rock.png');
+    this.load.image('obstacle-tree', 'assets/tree.png');
+    this.load.image('obstacle-sign', 'assets/trail_sign.png');
 
     // Load parallax background layers (1 = furthest back, 5 = closest)
     for (let i = 1; i <= 5; i++) {
-      this.load.image(`bg-layer-${i}`, `src/assets/background/${i}.png`);
+      this.load.image(`bg-layer-${i}`, `assets/background/${i}.png`);
     }
 
     // Load character icons for crank graphics
