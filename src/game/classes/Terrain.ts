@@ -3,7 +3,6 @@ import Phaser from 'phaser';
 export class Terrain {
   private scene: Phaser.Scene;
   private groundGraphics: Phaser.GameObjects.Graphics;
-  private groundBody: Phaser.Physics.Arcade.Body;
   private segmentWidth = 20; // Even smaller segments for smoother hills
   private lastSegmentX = -1000; // Start far off-screen to the left
   private baseY = 450;
@@ -21,8 +20,6 @@ export class Terrain {
 
   // Performance optimization: track if terrain needs redrawing
   private needsRedraw = true;
-  private lastPointCount = 0;
-  private lastFirstPointX = 0;
 
   // Performance optimization: cache for getGroundY lookups
   private lastLookupX = -Infinity;
@@ -156,8 +153,6 @@ export class Terrain {
     if (this.needsRedraw) {
       this.drawTerrain();
       this.needsRedraw = false;
-      this.lastPointCount = this.points.length;
-      this.lastFirstPointX = newFirstX;
     }
   }
 

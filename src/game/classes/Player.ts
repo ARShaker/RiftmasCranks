@@ -5,7 +5,6 @@ import { Trick } from '../../types/game';
 export class Player {
   public sprite: Phaser.Physics.Arcade.Sprite;
   public character: Character;
-  private scene: Phaser.Scene;
 
   // Physics properties
   private baseJumpVelocity = -600;
@@ -19,7 +18,6 @@ export class Player {
   public isBoostingGravity = false;
   public isSpeedBoosting = false;
   public isDoingTrick = false;
-  private rotation = 0;
   private speedBoostMultiplier = 1.8;
   private currentAnimation = 'skier-ride';
 
@@ -31,7 +29,6 @@ export class Player {
   public activeTrickKeys: Set<string> = new Set();
 
   constructor(scene: Phaser.Scene, x: number, y: number, character: Character) {
-    this.scene = scene;
     this.character = character;
 
     // Create sprite using the ride texture
@@ -127,9 +124,6 @@ export class Player {
       currentSpeed *= this.externalSpeedMultiplier;
 
       this.sprite.setVelocityX(currentSpeed);
-
-      // Track rotation for tricks
-      this.rotation = this.sprite.angle;
 
       // Note: isGrounded is now managed by GameScene's custom terrain collision
       // Don't check sprite.body.touching.down here as we use custom collision

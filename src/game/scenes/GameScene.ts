@@ -57,12 +57,6 @@ export class GameScene extends Phaser.Scene {
     black: 1.8,
   };
 
-  // Trick state
-  private currentTrickPoints = 0;
-  private currentTrickName = '';
-  private currentTrickStartTime = 0;
-  private trickPointsPerSecond = 10; // Points earned per second while holding trick
-  private pendingTrickPoints = 0; // Points waiting to be awarded on landing
 
   // Multiplier UI
   private multiplierBarBg?: Phaser.GameObjects.Graphics;
@@ -84,7 +78,6 @@ export class GameScene extends Phaser.Scene {
 
   // Callback to update React state
   private onScoreUpdate?: (score: number, distance: number, multiplier: number) => void;
-  private onTrickUpdate?: (points: number, trickName: string) => void;
   private onGameOver?: (score: number, distance: number, landingAngle?: number) => void;
 
   constructor() {
@@ -117,14 +110,12 @@ export class GameScene extends Phaser.Scene {
   public init(data?: {
     character?: Character;
     onScoreUpdate?: (score: number, distance: number, multiplier: number) => void;
-    onTrickUpdate?: (points: number, trickName: string) => void;
     onGameOver?: (score: number, distance: number, landingAngle?: number) => void;
   }): void {
     // Only set if data is provided (scene restart)
     if (data?.character) {
       this.selectedCharacter = data.character;
       this.onScoreUpdate = data.onScoreUpdate;
-      this.onTrickUpdate = data.onTrickUpdate;
       this.onGameOver = data.onGameOver;
 
       // Reset game state
@@ -968,12 +959,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Note: Multiplier decays over time, not on landing
-  }
-
-  private updateTrickHUD(): void {
-    if (this.onTrickUpdate) {
-      this.onTrickUpdate(this.currentTrickPoints, this.currentTrickName);
-    }
   }
 
   private handleObstacleCollision(): void {

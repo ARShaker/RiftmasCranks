@@ -4,7 +4,6 @@ import { Terrain } from './Terrain';
 type ObstacleType = 'rock' | 'tree' | 'sign';
 
 export class ObstacleManager {
-  private scene: Phaser.Scene;
   private obstacles: Phaser.Physics.Arcade.Group;
   private lastObstacleX = 800;
   private minDistance = 300;
@@ -19,7 +18,6 @@ export class ObstacleManager {
   };
 
   constructor(scene: Phaser.Scene, terrain?: Terrain) {
-    this.scene = scene;
     this.terrain = terrain;
     this.obstacles = scene.physics.add.group({
       immovable: true,
@@ -92,7 +90,7 @@ export class ObstacleManager {
     // Create the sprite (use default origin 0.5, 0.5 for proper physics body alignment)
     const obstacle = this.obstacles.create(x, 0, textureKey) as Phaser.Physics.Arcade.Sprite;
     obstacle.setImmovable(true);
-    obstacle.body!.allowGravity = false;
+    (obstacle.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
     obstacle.setScale(scale);
 
     // Position so bottom of sprite sits on ground
