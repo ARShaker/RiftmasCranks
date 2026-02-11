@@ -1,15 +1,26 @@
 import Phaser from 'phaser';
-import { ObstacleData } from '../../types/game';
+import { Terrain } from './Terrain';
+
+type ObstacleType = 'rock' | 'tree' | 'sign';
 
 export class ObstacleManager {
   private scene: Phaser.Scene;
   private obstacles: Phaser.Physics.Arcade.Group;
   private lastObstacleX = 800;
   private minDistance = 300;
-  private maxDistance = 600;
+  private maxDistance = 700;
+  private terrain?: Terrain;
 
-  constructor(scene: Phaser.Scene) {
+  // Base scales and collision box ratios for each obstacle type
+  private obstacleConfig: Record<ObstacleType, { baseScale: number; scaleVariance: number; hitboxRatio: { width: number; height: number } }> = {
+    rock: { baseScale: 0.1, scaleVariance: 0.03, hitboxRatio: { width: 0.7, height: 0.6 } },
+    tree: { baseScale: 0.12, scaleVariance: 0.04, hitboxRatio: { width: 0.3, height: 0.5 } },
+    sign: { baseScale: 0.2, scaleVariance: 0.05, hitboxRatio: { width: 0.3, height: 0.8 } },
+  };
+
+  constructor(scene: Phaser.Scene, terrain?: Terrain) {
     this.scene = scene;
+    this.terrain = terrain;
     this.obstacles = scene.physics.add.group({
       immovable: true,
       allowGravity: false,
@@ -20,7 +31,7 @@ export class ObstacleManager {
     // Remove obstacles that are off-screen
     this.obstacles.children.entries.forEach((obstacle) => {
       const sprite = obstacle as Phaser.Physics.Arcade.Sprite;
-      if (sprite.x < cameraX - 800) {
+      if (sprite.x < cameraX - 1500) {
         sprite.destroy();
       }
     });
@@ -35,69 +46,72 @@ export class ObstacleManager {
     const distance = Phaser.Math.Between(this.minDistance, this.maxDistance);
     this.lastObstacleX += distance;
 
-    const types: ObstacleData['type'][] = ['rock', 'ramp', 'gap'];
-    const type = Phaser.Utils.Array.GetRandom(types);
-
-    const baseY = 450; // Approximate ground level
-
-    switch (type) {
-      case 'rock':
-        this.createRock(this.lastObstacleX, baseY);
-        break;
-      case 'ramp':
-        this.createRamp(this.lastObstacleX, baseY);
-        break;
-      case 'gap':
-        this.createGap(this.lastObstacleX, baseY);
-        break;
+    // Don't spawn obstacles on ramps
+    if (this.terrain && this.terrain.isOnRamp(this.lastObstacleX)) {
+      return;
     }
+
+    // Randomly choose obstacle type
+    const types: ObstacleType[] = ['rock', 'tree', 'sign'];
+    const obstacleType = types[Phaser.Math.Between(0, types.length - 1)];
+
+    this.createObstacle(this.lastObstacleX, obstacleType);
   }
 
-  private createRock(x: number, y: number): void {
-    const width = Phaser.Math.Between(30, 60);
-    const height = Phaser.Math.Between(40, 80);
+  private getTerrainSlopeAngle(x: number): number {
+    if (!this.terrain) return 0;
 
-    const graphics = this.scene.add.graphics();
-    graphics.fillStyle(0x696969, 1); // Dark gray
-    graphics.fillRect(0, 0, width, height);
-    graphics.generateTexture(`rock_${x}`, width, height);
-    graphics.destroy();
+    // Get two nearby points to calculate slope
+    const sampleDistance = 20;
+    const y1 = this.terrain.getGroundY(x - sampleDistance);
+    const y2 = this.terrain.getGroundY(x + sampleDistance);
 
-    const rock = this.obstacles.create(x, y - height / 2, `rock_${x}`);
-    rock.setImmovable(true);
-    rock.body.allowGravity = false;
+    // Calculate slope angle
+    const deltaY = y2 - y1;
+    const deltaX = sampleDistance * 2;
+
+    const slopeAngleRadians = Math.atan2(deltaY, deltaX);
+    const slopeAngleDegrees = slopeAngleRadians * (180 / Math.PI);
+
+    return slopeAngleDegrees;
   }
 
-  private createRamp(x: number, y: number): void {
-    const width = 150;
-    const height = 60;
+  private createObstacle(x: number, type: ObstacleType): void {
+    if (!this.terrain) return;
 
-    const graphics = this.scene.add.graphics();
-    graphics.fillStyle(0x8B4513, 1); // Brown
-    graphics.fillTriangle(0, height, width, height, width, 0);
-    graphics.generateTexture(`ramp_${x}`, width, height);
-    graphics.destroy();
+    const config = this.obstacleConfig[type];
+    const textureKey = `obstacle-${type}`;
 
-    const ramp = this.obstacles.create(x, y - height / 2, `ramp_${x}`);
-    ramp.setImmovable(true);
-    ramp.body.allowGravity = false;
-  }
+    // Calculate random scale within variance range
+    const scale = config.baseScale + Phaser.Math.FloatBetween(-config.scaleVariance, config.scaleVariance);
 
-  private createGap(x: number, y: number): void {
-    // Gap is represented by lack of terrain
-    // We'll create invisible markers for scoring/danger zones
-    const width = Phaser.Math.Between(100, 200);
+    // Get ground position and slope angle
+    const groundY = this.terrain.getGroundY(x);
+    const slopeAngle = this.getTerrainSlopeAngle(x);
 
-    const graphics = this.scene.add.graphics();
-    graphics.fillStyle(0x000000, 0.3);
-    graphics.fillRect(0, 0, width, 10);
-    graphics.generateTexture(`gap_${x}`, width, 10);
-    graphics.destroy();
+    // Create the sprite (use default origin 0.5, 0.5 for proper physics body alignment)
+    const obstacle = this.obstacles.create(x, 0, textureKey) as Phaser.Physics.Arcade.Sprite;
+    obstacle.setImmovable(true);
+    obstacle.body!.allowGravity = false;
+    obstacle.setScale(scale);
 
-    const gap = this.obstacles.create(x, y + 50, `gap_${x}`);
-    gap.setImmovable(true);
-    gap.body.allowGravity = false;
-    gap.setAlpha(0.3);
+    // Position so bottom of sprite sits on ground
+    obstacle.y = groundY - obstacle.displayHeight / 2;
+
+    // Rotate to align with slope
+    obstacle.setAngle(slopeAngle);
+
+    // Set collision box based on the type's hitbox ratio
+    const body = obstacle.body as Phaser.Physics.Arcade.Body;
+    const hitboxWidth = obstacle.width * config.hitboxRatio.width;
+    const hitboxHeight = obstacle.height * config.hitboxRatio.height;
+
+    body.setSize(hitboxWidth, hitboxHeight);
+
+    // Center the hitbox horizontally, align to bottom of sprite
+    const offsetX = (obstacle.width - hitboxWidth) / 2;
+    const offsetY = obstacle.height - hitboxHeight;
+    body.setOffset(offsetX, offsetY);
   }
 
   public getObstacles(): Phaser.Physics.Arcade.Group {

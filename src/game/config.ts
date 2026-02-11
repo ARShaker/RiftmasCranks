@@ -5,8 +5,8 @@ export const createGameConfig = (parent: string): Phaser.Types.Core.GameConfig =
   return {
     type: Phaser.AUTO,
     parent,
-    width: 1200,
-    height: 600,
+    width: window.innerWidth,
+    height: window.innerHeight,
     backgroundColor: '#87CEEB', // Sky blue
     physics: {
       default: 'arcade',
@@ -18,7 +18,7 @@ export const createGameConfig = (parent: string): Phaser.Types.Core.GameConfig =
     scene: [GameScene],
     autoFocus: true,
     scale: {
-      mode: Phaser.Scale.FIT,
+      mode: Phaser.Scale.RESIZE,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
   };

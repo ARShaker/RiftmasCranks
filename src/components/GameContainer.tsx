@@ -12,11 +12,15 @@ interface GameContainerProps {
 export const GameContainer: React.FC<GameContainerProps> = ({ character, onGameOver }) => {
   const gameRef = useRef<Phaser.Game | null>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
+  const onGameOverRef = useRef(onGameOver);
   const [score, setScore] = useState(0);
   const [distance, setDistance] = useState(0);
   const [multiplier, setMultiplier] = useState(1);
   const [currentTrickPoints, setCurrentTrickPoints] = useState(0);
   const [currentTrickName, setCurrentTrickName] = useState('');
+
+  // Keep the ref up to date without triggering effect re-runs
+  onGameOverRef.current = onGameOver;
 
   useEffect(() => {
     if (!gameContainerRef.current) return;
@@ -51,7 +55,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({ character, onGameO
           setCurrentTrickName(trickName);
         },
         onGameOver: (finalScore: number, finalDistance: number, landingAngle?: number) => {
-          onGameOver(finalScore, finalDistance, landingAngle);
+          onGameOverRef.current(finalScore, finalDistance, landingAngle);
         },
       });
 
@@ -71,7 +75,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({ character, onGameO
         gameRef.current = null;
       }
     };
-  }, [character, onGameOver]);
+  }, [character]); // Only re-run when character changes, not onGameOver
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>

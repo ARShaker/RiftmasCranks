@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Character } from './types/character';
 import { GameState } from './types/game';
 import { CharacterSelection } from './components/CharacterSelection';
@@ -19,12 +19,12 @@ function App() {
     setGameKey(Date.now()); // New game instance
   };
 
-  const handleGameOver = (score: number, distance: number, angle?: number) => {
+  const handleGameOver = useCallback((score: number, distance: number, angle?: number) => {
     setFinalScore(score);
     setFinalDistance(distance);
     setLandingAngle(angle);
     setGameState('game-over');
-  };
+  }, []);
 
   const handleRestart = () => {
     if (selectedCharacter) {

@@ -17,7 +17,14 @@ export class Player {
   public isGrounded = false;
   public isCrouching = false;
   public isBoostingGravity = false;
+  public isSpeedBoosting = false;
+  public isDoingTrick = false;
   private rotation = 0;
+  private speedBoostMultiplier = 1.8;
+  private currentAnimation = 'skier-ride';
+
+  // External speed multiplier (e.g., from trail difficulty)
+  private externalSpeedMultiplier = 1.0;
 
   // Trick tracking
   public currentTrick: Trick | null = null;
@@ -27,11 +34,13 @@ export class Player {
     this.scene = scene;
     this.character = character;
 
-    // Create sprite using the spritesheet
-    this.sprite = scene.physics.add.sprite(x, y, 'skier', 0);
+    // Create sprite using the ride texture
+    this.sprite = scene.physics.add.sprite(x, y, 'skier-ride');
 
-    // Scale based on character height
-    const scale = character.height * 1.5;
+    // Scale down from 375x300 to roughly 50x40 (original was 32x32)
+    // Base scale of ~0.13 gets us to about 50px wide, then adjust by character height
+    const baseScale = 0.20;
+    const scale = baseScale * character.height;
     this.sprite.setScale(scale);
 
     this.sprite.setCollideWorldBounds(false);
@@ -49,7 +58,7 @@ export class Player {
   public jump(): void {
     if (this.isGrounded) {
       // Taller characters get more jump height
-      const jumpPower = this.baseJumpVelocity * (0.9 + this.character.height * 0.1);
+      const jumpPower = this.baseJumpVelocity * (1.2 + this.character.height * 0.1);
       this.sprite.setVelocityY(jumpPower);
       this.isGrounded = false;
     }
@@ -81,6 +90,18 @@ export class Player {
     this.isBoostingGravity = false;
   }
 
+  public startSpeedBoost(): void {
+    this.isSpeedBoosting = true;
+  }
+
+  public stopSpeedBoost(): void {
+    this.isSpeedBoosting = false;
+  }
+
+  public setSpeedMultiplier(multiplier: number): void {
+    this.externalSpeedMultiplier = multiplier;
+  }
+
   public update(): void {
     // Apply gravity modifications based on character weight and boost
     const body = this.sprite.body as Phaser.Physics.Arcade.Body;
@@ -95,7 +116,16 @@ export class Player {
       body.setGravityY(baseGravity * (gravityMultiplier - 1));
 
       // Apply horizontal speed based on weight (heavier = faster)
-      const currentSpeed = this.baseSpeed * this.character.weight;
+      let currentSpeed = this.baseSpeed * this.character.weight;
+
+      // Apply speed boost if active
+      if (this.isSpeedBoosting) {
+        currentSpeed *= this.speedBoostMultiplier;
+      }
+
+      // Apply external multiplier (e.g., trail difficulty)
+      currentSpeed *= this.externalSpeedMultiplier;
+
       this.sprite.setVelocityX(currentSpeed);
 
       // Track rotation for tricks
@@ -144,6 +174,15 @@ export class Player {
       x: this.sprite.x,
       y: this.sprite.y,
     };
+  }
+
+  public updateAnimation(): void {
+    const targetTexture = this.isGrounded ? 'skier-ride' : 'skier-jump';
+
+    if (this.currentAnimation !== targetTexture) {
+      this.currentAnimation = targetTexture;
+      this.sprite.setTexture(targetTexture);
+    }
   }
 
   public destroy(): void {

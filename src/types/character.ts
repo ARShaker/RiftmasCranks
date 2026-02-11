@@ -5,6 +5,7 @@ export interface Character {
   weight: number; // 0.8 - 1.2 (multiplier, 1.0 is average)
   color: string; // Character color for rendering
   avatar?: string; // Optional avatar image path
+  icon?: string; // Optional icon image path for character selection
 }
 
 export interface CharacterPhysics {

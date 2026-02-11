@@ -3,37 +3,74 @@ import { Character } from '../types/character';
 export const characters: Character[] = [
   {
     id: 'friend1',
-    name: 'Alex',
-    height: 1.15, // Taller - harder tricks, more air
-    weight: 0.9,  // Lighter - slower falling, less momentum
+    name: 'Jamie',
+    height: 1.0,
+    weight: 1.0,
     color: '#FF6B6B',
+    icon: '/icons/jamie.png',
   },
   {
     id: 'friend2',
-    name: 'Jordan',
-    height: 0.85, // Shorter - easier tricks, less air
-    weight: 1.2,  // Heavier - faster falling, more momentum
+    name: 'Mack',
+    height: 1.0,
+    weight: 1.0,
     color: '#4ECDC4',
+    icon: '/icons/mack.png',
   },
   {
     id: 'friend3',
-    name: 'Sam',
-    height: 1.0,  // Average
-    weight: 1.0,  // Average - balanced character
+    name: 'Dygs',
+    height: 1.0,
+    weight: 1.0,
     color: '#95E1D3',
+    icon: '/icons/dygs.png',
   },
   {
     id: 'friend4',
-    name: 'Taylor',
-    height: 1.1,  // Tall
-    weight: 1.15, // Heavy - goes fast and far
+    name: 'Dave',
+    height: 1.0,
+    weight: 1.0,
     color: '#F38181',
+    icon: '/icons/dave.png',
   },
   {
     id: 'friend5',
-    name: 'Casey',
-    height: 0.9,  // Short
-    weight: 0.85, // Light - floaty gameplay
+    name: 'Tommy',
+    height: 1.0,
+    weight: 1.0,
     color: '#AA96DA',
+    icon: '/icons/tommy.png',
+  },
+  {
+    id: 'friend6',
+    name: 'Will',
+    height: 1.0,
+    weight: 1.0,
+    color: '#AA96DA',
+    icon: '/icons/will.png',
+  },
+  {
+    id: 'friend7',
+    name: 'Oliver',
+    height: 1.0,
+    weight: 1.0,
+    color: '#AA96DA',
+    icon: '/icons/oliver.png',
+  },
+  {
+    id: 'friend8',
+    name: 'Van',
+    height: 1.0,
+    weight: 1.0,
+    color: '#AA96DA',
+    icon: '/icons/van.png',
+  },
+  {
+    id: 'friend9',
+    name: 'Shaker',
+    height: 1.0,
+    weight: 1.0,
+    color: '#AA96DA',
+    icon: '/icons/shaker.png',
   },
 ];
