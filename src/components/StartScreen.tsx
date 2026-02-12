@@ -86,7 +86,6 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
   const [showPrompt, setShowPrompt] = useState(true);
   const [time, setTime] = useState(0);
   const [flyingImages, setFlyingImages] = useState<FlyingImage[]>([]);
-  const imageIndexRef = useRef(0);
   const idCounterRef = useRef(0);
 
   const titleText = 'Riftmas Crankerz';
