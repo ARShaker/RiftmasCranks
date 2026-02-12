@@ -46,7 +46,7 @@ export const characters: Character[] = [
     name: 'Will',
     height: 1.0,
     weight: 1.0,
-    color: '#AA96DA',
+    color: '#FFD93D',
     icon: '/icons/will.png',
   },
   {
@@ -54,7 +54,7 @@ export const characters: Character[] = [
     name: 'Oliver',
     height: 1.0,
     weight: 1.0,
-    color: '#AA96DA',
+    color: '#6BCB77',
     icon: '/icons/oliver.png',
   },
   {
@@ -62,7 +62,7 @@ export const characters: Character[] = [
     name: 'Van',
     height: 1.0,
     weight: 1.0,
-    color: '#AA96DA',
+    color: '#4D96FF',
     icon: '/icons/van.png',
   },
   {
@@ -70,7 +70,7 @@ export const characters: Character[] = [
     name: 'Shaker',
     height: 1.0,
     weight: 1.0,
-    color: '#AA96DA',
+    color: '#FF9F45',
     icon: '/icons/shaker.png',
   },
 ];

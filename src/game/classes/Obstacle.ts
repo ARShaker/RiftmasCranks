@@ -115,4 +115,8 @@ export class ObstacleManager {
   public getObstacles(): Phaser.Physics.Arcade.Group {
     return this.obstacles;
   }
+
+  public clearAll(): void {
+    this.obstacles.clear(true, true);
+  }
 }

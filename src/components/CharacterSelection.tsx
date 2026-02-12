@@ -80,8 +80,9 @@ export const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onSelect
       </div>
       <h3 style={{
         color: 'white',
-        fontSize: '20px',
+        fontSize: '12px',
         marginBottom: '10px',
+        fontFamily: '"Press Start 2P", "Courier New", monospace',
       }}>
         {character.name}
       </h3>
@@ -102,16 +103,17 @@ export const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onSelect
     }}>
       <h1 style={{
         color: 'white',
-        fontSize: '48px',
+        fontSize: '24px',
         marginBottom: '10px',
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: '"Press Start 2P", "Courier New", monospace',
       }}>
-        The Riftmas Cranks
+        The Riftmas Crankerz
       </h1>
       <h2 style={{
         color: '#aaa',
-        fontSize: '24px',
+        fontSize: '14px',
         marginBottom: '30px',
+        fontFamily: '"Press Start 2P", "Courier New", monospace',
       }}>
         Choose Your Cranker
       </h2>
@@ -148,9 +150,11 @@ export const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onSelect
       <div style={{
         marginTop: '30px',
         color: '#aaa',
-        fontSize: '14px',
+        fontSize: '8px',
         textAlign: 'center',
         maxWidth: '600px',
+        fontFamily: '"Press Start 2P", "Courier New", monospace',
+        lineHeight: '1.8',
       }}>
         <p><strong>Controls:</strong></p>
         <p>SPACEBAR - Jump | SHIFT - Speed Boost</p>

@@ -1,12 +1,13 @@
 import { useState, useCallback } from 'react';
 import { Character } from './types/character';
 import { GameState } from './types/game';
+import { StartScreen } from './components/StartScreen';
 import { CharacterSelection } from './components/CharacterSelection';
 import { GameContainer } from './components/GameContainer';
 import { GameOver } from './components/GameOver';
 
 function App() {
-  const [gameState, setGameState] = useState<GameState>('character-select');
+  const [gameState, setGameState] = useState<GameState>('menu');
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [finalScore, setFinalScore] = useState(0);
   const [finalDistance, setFinalDistance] = useState(0);
@@ -33,13 +34,21 @@ function App() {
     }
   };
 
+  const handleStartGame = () => {
+    setGameState('character-select');
+  };
+
   const handleBackToMenu = () => {
     setSelectedCharacter(null);
-    setGameState('character-select');
+    setGameState('menu');
   };
 
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+      {gameState === 'menu' && (
+        <StartScreen onStart={handleStartGame} />
+      )}
+
       {gameState === 'character-select' && (
         <CharacterSelection onSelect={handleCharacterSelect} />
       )}

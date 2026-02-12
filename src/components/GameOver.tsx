@@ -9,6 +9,8 @@ interface GameOverProps {
   onBackToMenu: () => void;
 }
 
+const pixelFont = '"Press Start 2P", "Courier New", monospace';
+
 export const GameOver: React.FC<GameOverProps> = ({
   score,
   distance,
@@ -61,11 +63,13 @@ export const GameOver: React.FC<GameOverProps> = ({
       justifyContent: 'center',
       zIndex: 2000,
       pointerEvents: 'none',
+      fontFamily: pixelFont,
     }}>
       <h1 style={{
         color: 'white',
-        fontSize: '64px',
+        fontSize: '32px',
         marginBottom: '20px',
+        fontFamily: pixelFont,
       }}>
         Game Over!
       </h1>
@@ -82,25 +86,28 @@ export const GameOver: React.FC<GameOverProps> = ({
         {landingAngle !== undefined && (
           <div style={{
             color: '#ff6b6b',
-            fontSize: '24px',
+            fontSize: '10px',
             marginBottom: '15px',
             textAlign: 'center',
+            fontFamily: pixelFont,
           }}>
-            <strong>Landing Angle:</strong> {landingAngle.toFixed(1)}° (Max: 35°)
+            <strong>Landing Angle:</strong> {landingAngle.toFixed(1)}° (Max: 38°)
           </div>
         )}
         <div style={{
           color: 'white',
-          fontSize: '28px',
+          fontSize: '14px',
           marginBottom: '10px',
           textAlign: 'center',
+          fontFamily: pixelFont,
         }}>
           <strong>Final Score:</strong> {score}
         </div>
         <div style={{
           color: 'white',
-          fontSize: '20px',
+          fontSize: '10px',
           textAlign: 'center',
+          fontFamily: pixelFont,
         }}>
           <strong>Distance:</strong> {distance}m
         </div>
@@ -119,11 +126,12 @@ export const GameOver: React.FC<GameOverProps> = ({
         }}>
           <div style={{
             color: '#4ECDC4',
-            fontSize: '24px',
+            fontSize: '12px',
             marginBottom: '15px',
             fontWeight: 'bold',
+            fontFamily: pixelFont,
           }}>
-            🎉 New High Score! 🎉
+            New High Score!
           </div>
           <div style={{
             display: 'flex',
@@ -136,15 +144,16 @@ export const GameOver: React.FC<GameOverProps> = ({
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Enter name"
+              placeholder="Name"
               maxLength={10}
               style={{
                 padding: '10px 15px',
-                fontSize: '18px',
+                fontSize: '12px',
                 borderRadius: '8px',
                 border: 'none',
-                width: '150px',
+                width: '120px',
                 textAlign: 'center',
+                fontFamily: pixelFont,
               }}
               autoFocus
             />
@@ -152,13 +161,14 @@ export const GameOver: React.FC<GameOverProps> = ({
               onClick={handleSubmitScore}
               style={{
                 padding: '10px 20px',
-                fontSize: '18px',
+                fontSize: '10px',
                 backgroundColor: '#4ECDC4',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 fontWeight: 'bold',
+                fontFamily: pixelFont,
               }}
             >
               Submit
@@ -178,17 +188,19 @@ export const GameOver: React.FC<GameOverProps> = ({
       }}>
         <h2 style={{
           color: 'white',
-          fontSize: '24px',
+          fontSize: '14px',
           marginBottom: '15px',
           textAlign: 'center',
+          fontFamily: pixelFont,
         }}>
-          🏆 Leaderboard
+          Leaderboard
         </h2>
         {leaderboard.length === 0 ? (
           <div style={{
             color: '#aaa',
             textAlign: 'center',
-            fontSize: '16px',
+            fontSize: '10px',
+            fontFamily: pixelFont,
           }}>
             No scores yet. Be the first!
           </div>
@@ -216,23 +228,26 @@ export const GameOver: React.FC<GameOverProps> = ({
                 }}>
                   <span style={{
                     color: index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : '#aaa',
-                    fontSize: '20px',
+                    fontSize: '12px',
                     fontWeight: 'bold',
                     width: '30px',
+                    fontFamily: pixelFont,
                   }}>
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
+                    {index + 1}.
                   </span>
                   <span style={{
                     color: 'white',
-                    fontSize: '18px',
+                    fontSize: '10px',
+                    fontFamily: pixelFont,
                   }}>
                     {entry.name}
                   </span>
                 </div>
                 <span style={{
                   color: '#4ECDC4',
-                  fontSize: '18px',
+                  fontSize: '10px',
                   fontWeight: 'bold',
+                  fontFamily: pixelFont,
                 }}>
                   {entry.score.toLocaleString()}
                 </span>
@@ -251,8 +266,8 @@ export const GameOver: React.FC<GameOverProps> = ({
         <button
           onClick={onRestart}
           style={{
-            padding: '15px 40px',
-            fontSize: '20px',
+            padding: '15px 30px',
+            fontSize: '10px',
             backgroundColor: '#4ECDC4',
             color: 'white',
             border: 'none',
@@ -260,6 +275,7 @@ export const GameOver: React.FC<GameOverProps> = ({
             cursor: 'pointer',
             fontWeight: 'bold',
             transition: 'background-color 0.2s',
+            fontFamily: pixelFont,
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = '#45b8b0';
@@ -273,8 +289,8 @@ export const GameOver: React.FC<GameOverProps> = ({
         <button
           onClick={onBackToMenu}
           style={{
-            padding: '15px 40px',
-            fontSize: '20px',
+            padding: '15px 30px',
+            fontSize: '10px',
             backgroundColor: '#95E1D3',
             color: '#1a1a2e',
             border: 'none',
@@ -282,6 +298,7 @@ export const GameOver: React.FC<GameOverProps> = ({
             cursor: 'pointer',
             fontWeight: 'bold',
             transition: 'background-color 0.2s',
+            fontFamily: pixelFont,
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = '#7dd4c6';
@@ -290,7 +307,7 @@ export const GameOver: React.FC<GameOverProps> = ({
             e.currentTarget.style.backgroundColor = '#95E1D3';
           }}
         >
-          Character Select
+          Menu
         </button>
       </div>
     </div>

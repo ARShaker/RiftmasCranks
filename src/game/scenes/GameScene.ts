@@ -325,22 +325,22 @@ export class GameScene extends Phaser.Scene {
 
     const config = trailConfig[trail];
 
-    // Create container for header elements
-    this.trailHeaderContainer = this.add.container(screenWidth / 2, screenHeight / 2);
+    // Create container for header elements (positioned 1/3 from top = 2/3 up the screen)
+    this.trailHeaderContainer = this.add.container(screenWidth / 2, screenHeight / 3);
     this.trailHeaderContainer.setScrollFactor(0);
     this.trailHeaderContainer.setDepth(3000);
 
-    // Create background panel
-    const panelWidth = 450;
-    const panelHeight = 150;
-    const panel = this.add.rectangle(0, 0, panelWidth, panelHeight, 0x000000, 0.8);
+    // Create background panel (smaller and translucent)
+    const panelWidth = 300;
+    const panelHeight = 100;
+    const panel = this.add.rectangle(0, 0, panelWidth, panelHeight, 0x000000, 0.5);
     panel.setStrokeStyle(4, config.color);
     this.trailHeaderContainer.add(panel);
 
-    // Create icon based on trail type
+    // Create icon based on trail type (smaller)
     const iconGraphics = this.add.graphics();
-    const iconSize = 40;
-    const iconX = -170; // Far left of panel with less padding
+    const iconSize = 28;
+    const iconX = -110; // Far left of panel with less padding
 
     if (trail === 'green') {
       // Green circle
@@ -363,13 +363,13 @@ export class GameScene extends Phaser.Scene {
     }
     this.trailHeaderContainer.add(iconGraphics);
 
-    // Create trail name text (positioned to the right of the icon)
-    const trailText = this.add.text(iconX + iconSize / 2 + 20, 0, config.name, {
-      fontSize: '48px',
+    // Create trail name text (positioned to the right of the icon, smaller)
+    const trailText = this.add.text(iconX + iconSize / 2 + 15, 0, config.name, {
+      fontSize: '32px',
       color: '#FFFFFF',
       fontStyle: 'bold',
       stroke: '#000000',
-      strokeThickness: 4,
+      strokeThickness: 3,
     });
     trailText.setOrigin(0, 0.5); // Left-aligned
     this.trailHeaderContainer.add(trailText);
@@ -379,9 +379,9 @@ export class GameScene extends Phaser.Scene {
       this.trailTintOverlay.setFillStyle(config.tintColor, 0.15);
     }
 
-    // Animate: scale in, pause, then fade out
+    // Animate: scale in, pause, then fade out (start translucent)
     this.trailHeaderContainer.setScale(0);
-    this.trailHeaderContainer.setAlpha(1);
+    this.trailHeaderContainer.setAlpha(0.85);
 
     this.tweens.add({
       targets: this.trailHeaderContainer,
@@ -495,12 +495,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   private activateCrank(): void {
-    if (!this.player || !this.selectedCharacter) return;
+    if (!this.player || !this.selectedCharacter || !this.terrain || !this.obstacleManager) return;
 
     this.hasCrankedThisSession = true;
 
     // Add 1000 points
     this.score += 1000;
+
+    // Clear all obstacles on screen
+    this.obstacleManager.clearAll();
 
     // Get character name for the crank image
     const characterName = this.selectedCharacter.name.toLowerCase();
@@ -568,6 +571,22 @@ export class GameScene extends Phaser.Scene {
     // Pause physics
     this.physics.pause();
 
+    // Calculate target ground position for gentle landing
+    const playerPos = this.player.getPosition();
+    const groundY = this.terrain.getGroundY(playerPos.x);
+    const playerHeight = this.player.sprite.displayHeight;
+    const targetY = groundY - playerHeight / 2;
+    const slopeAngle = this.getTerrainSlopeAngle(playerPos.x);
+
+    // Gently tween the player to the ground
+    this.tweens.add({
+      targets: this.player.sprite,
+      y: targetY,
+      angle: slopeAngle,
+      duration: 800,
+      ease: 'Sine.easeInOut',
+    });
+
     // Resume after 1 second
     this.time.delayedCall(1000, () => {
       // Clean up overlay and images
@@ -581,6 +600,13 @@ export class GameScene extends Phaser.Scene {
       }
       bonusText.destroy();
       crankText.destroy();
+
+      // Set player as grounded and reset flip tracking
+      if (this.player) {
+        this.player.isGrounded = true;
+        this.flipsCompleted = 0;
+        this.cumulativeRotation = 0;
+      }
 
       // Resume physics
       this.physics.resume();
@@ -682,8 +708,8 @@ export class GameScene extends Phaser.Scene {
             relativeAngle = 360 - relativeAngle;
           }
 
-          // Crash if landing more than 35° from perpendicular to slope
-          const isBadLanding = relativeAngle > 35;
+          // Crash if landing more than 38° from perpendicular to slope
+          const isBadLanding = relativeAngle > 38;
 
           if (isBadLanding) {
             // Crashed! Game over - pass the relative angle for display

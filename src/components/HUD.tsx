@@ -8,6 +8,8 @@ interface HUDProps {
   currentTrickName: string;
 }
 
+const pixelFont = '"Press Start 2P", "Courier New", monospace';
+
 export const HUD: React.FC<HUDProps> = ({ score, distance, multiplier, currentTrickPoints, currentTrickName }) => {
   return (
     <div style={{
@@ -18,8 +20,8 @@ export const HUD: React.FC<HUDProps> = ({ score, distance, multiplier, currentTr
       backgroundColor: 'rgba(0, 0, 0, 0.7)',
       borderRadius: '10px',
       color: 'white',
-      fontFamily: 'monospace',
-      fontSize: '18px',
+      fontFamily: pixelFont,
+      fontSize: '12px',
       minWidth: '200px',
       zIndex: 1000,
     }}>
@@ -30,7 +32,7 @@ export const HUD: React.FC<HUDProps> = ({ score, distance, multiplier, currentTr
         <div style={{
           marginBottom: '10px',
           color: '#00ff00',
-          fontSize: '16px',
+          fontSize: '10px',
           animation: 'pulse 0.5s infinite',
         }}>
           <strong>{currentTrickName}:</strong> +{currentTrickPoints}
