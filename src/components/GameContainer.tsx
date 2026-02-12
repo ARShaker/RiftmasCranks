@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Phaser from 'phaser';
 import { Character } from '../types/character';
+import { GameOverData } from '../types/game';
 import { createGameConfig } from '../game/config';
 import { HUD } from './HUD';
 
 interface GameContainerProps {
   character: Character;
-  onGameOver: (score: number, distance: number, landingAngle?: number) => void;
+  onGameOver: (data: GameOverData) => void;
 }
 
 export const GameContainer: React.FC<GameContainerProps> = ({ character, onGameOver }) => {
@@ -54,8 +55,8 @@ export const GameContainer: React.FC<GameContainerProps> = ({ character, onGameO
           setCurrentTrickPoints(points);
           setCurrentTrickName(trickName);
         },
-        onGameOver: (finalScore: number, finalDistance: number, landingAngle?: number) => {
-          onGameOverRef.current(finalScore, finalDistance, landingAngle);
+        onGameOver: (data: GameOverData) => {
+          onGameOverRef.current(data);
         },
       });
 

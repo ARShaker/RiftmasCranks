@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { Character } from '../../types/character';
+import { GameOverData, TrailType } from '../../types/game';
 import { Player } from '../classes/Player';
 import { Terrain } from '../classes/Terrain';
 import { ObstacleManager } from '../classes/Obstacle';
@@ -28,6 +29,7 @@ export class GameScene extends Phaser.Scene {
   private distance = 0;
   private lastScoreTime = 0; // Track last time we added score
   private scoreMultiplier = 1; // Multiplier for time-based scoring
+  private maxMultiplier = 1; // Track highest multiplier achieved
   private multiplierDecayTime = 0; // Time when multiplier should decay
   private multiplierDecayDuration = 10000; // 10 seconds in milliseconds
   private airborneStartAngle = 0; // Track the angle when becoming airborne
@@ -78,7 +80,7 @@ export class GameScene extends Phaser.Scene {
 
   // Callback to update React state
   private onScoreUpdate?: (score: number, distance: number, multiplier: number) => void;
-  private onGameOver?: (score: number, distance: number, landingAngle?: number) => void;
+  private onGameOver?: (data: GameOverData) => void;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -110,7 +112,7 @@ export class GameScene extends Phaser.Scene {
   public init(data?: {
     character?: Character;
     onScoreUpdate?: (score: number, distance: number, multiplier: number) => void;
-    onGameOver?: (score: number, distance: number, landingAngle?: number) => void;
+    onGameOver?: (data: GameOverData) => void;
   }): void {
     // Only set if data is provided (scene restart)
     if (data?.character) {
@@ -124,6 +126,7 @@ export class GameScene extends Phaser.Scene {
       this.lastScoreTime = 0;
       this.currentTrail = 'green';
       this.scoreMultiplier = 1;
+      this.maxMultiplier = 1;
       this.multiplierDecayTime = 0;
       this.flipsCompleted = 0;
       this.cumulativeRotation = 0;
@@ -925,6 +928,11 @@ export class GameScene extends Phaser.Scene {
     // Increase score multiplier by the number of flips completed, max at 5x
     this.scoreMultiplier = Math.min(5, this.scoreMultiplier + flipsCompleted);
 
+    // Track highest multiplier achieved
+    if (this.scoreMultiplier > this.maxMultiplier) {
+      this.maxMultiplier = this.scoreMultiplier;
+    }
+
     // Reset/set the decay timer to 10 seconds from now
     this.multiplierDecayTime = this.time.now + this.multiplierDecayDuration;
   }
@@ -1033,7 +1041,22 @@ export class GameScene extends Phaser.Scene {
     if (this.onGameOver) {
       // Don't pass 999 or -1 special values to the callback
       const angleToReport = (displayAngle === 999 || displayAngle === -1) ? undefined : displayAngle;
-      this.onGameOver(this.score, this.distance, angleToReport);
+
+      // Convert internal trail name to display format
+      const trailDisplayNames: Record<string, TrailType> = {
+        'green': 'Green',
+        'blue': 'Blue',
+        'black': 'Black Diamond'
+      };
+
+      this.onGameOver({
+        score: this.score,
+        distance: this.distance,
+        tricksCompleted: this.totalLandedFlips,
+        maxMultiplier: this.maxMultiplier,
+        trailReached: trailDisplayNames[this.currentTrail],
+        landingAngle: angleToReport
+      });
     }
   }
 

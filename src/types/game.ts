@@ -1,10 +1,21 @@
 export type GameState = 'menu' | 'character-select' | 'playing' | 'game-over';
 
+export type TrailType = 'Green' | 'Blue' | 'Black Diamond';
+
 export interface GameScore {
   points: number;
   distance: number;
   tricksCompleted: number;
   comboMultiplier: number;
+}
+
+export interface GameOverData {
+  score: number;
+  distance: number;
+  tricksCompleted: number;
+  maxMultiplier: number;
+  trailReached: TrailType;
+  landingAngle?: number;
 }
 
 export interface Trick {

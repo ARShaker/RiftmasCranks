@@ -1,62 +1,91 @@
+import { supabase } from './supabase'
+
 export interface LeaderboardEntry {
-  name: string;
-  score: number;
-  date: string;
+  id: string
+  player_name: string
+  character_name: string
+  score: number
+  distance: number
+  tricks_completed: number
+  max_multiplier: number
+  trail_reached: string
+  created_at: string
 }
 
-const LEADERBOARD_KEY = 'riftmas-cranks-leaderboard';
-const MAX_ENTRIES = 5;
-
-export function getLeaderboard(): LeaderboardEntry[] {
-  try {
-    const data = localStorage.getItem(LEADERBOARD_KEY);
-    if (!data) return [];
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
+export interface ScoreSubmission {
+  player_name: string
+  character_name: string
+  score: number
+  distance: number
+  tricks_completed?: number
+  max_multiplier?: number
+  trail_reached?: string
 }
 
-export function isHighScore(score: number): boolean {
-  const leaderboard = getLeaderboard();
-  if (leaderboard.length < MAX_ENTRIES) return true;
-  return score > leaderboard[leaderboard.length - 1].score;
-}
+const MAX_ENTRIES = 10
 
-export function getScoreRank(score: number): number | null {
-  const leaderboard = getLeaderboard();
-  for (let i = 0; i < leaderboard.length; i++) {
-    if (score > leaderboard[i].score) {
-      return i + 1;
-    }
-  }
-  if (leaderboard.length < MAX_ENTRIES) {
-    return leaderboard.length + 1;
-  }
-  return null;
-}
+// Fetch top scores from Supabase
+export async function getLeaderboard(limit: number = MAX_ENTRIES): Promise<LeaderboardEntry[]> {
+  const { data, error } = await supabase
+    .from('leaderboard')
+    .select('*')
+    .order('score', { ascending: false })
+    .limit(limit)
 
-export function addScore(name: string, score: number): LeaderboardEntry[] {
-  const leaderboard = getLeaderboard();
-  const newEntry: LeaderboardEntry = {
-    name: name.substring(0, 10), // Max 10 characters
-    score,
-    date: new Date().toLocaleDateString(),
-  };
-
-  leaderboard.push(newEntry);
-  leaderboard.sort((a, b) => b.score - a.score);
-  const trimmed = leaderboard.slice(0, MAX_ENTRIES);
-
-  try {
-    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(trimmed));
-  } catch {
-    // LocalStorage might be full or unavailable
+  if (error) {
+    console.error('Error fetching leaderboard:', error)
+    return []
   }
 
-  return trimmed;
+  return data || []
 }
 
-export function clearLeaderboard(): void {
-  localStorage.removeItem(LEADERBOARD_KEY);
+// Check if score qualifies for top N
+export async function isHighScore(score: number, topN: number = MAX_ENTRIES): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('leaderboard')
+    .select('score')
+    .order('score', { ascending: false })
+    .limit(topN)
+
+  if (error || !data) return true // Allow submission on error
+
+  if (data.length < topN) return true
+
+  const lowestTopScore = data[data.length - 1]?.score || 0
+  return score > lowestTopScore
+}
+
+// Get rank for a score
+export async function getScoreRank(score: number): Promise<number | null> {
+  const { count, error } = await supabase
+    .from('leaderboard')
+    .select('*', { count: 'exact', head: true })
+    .gt('score', score)
+
+  if (error) return null
+  return (count || 0) + 1
+}
+
+// Submit a new score
+export async function addScore(entry: ScoreSubmission): Promise<LeaderboardEntry[] | null> {
+  const { error } = await supabase
+    .from('leaderboard')
+    .insert([{
+      player_name: entry.player_name.slice(0, 10),
+      character_name: entry.character_name,
+      score: entry.score,
+      distance: entry.distance,
+      tricks_completed: entry.tricks_completed || 0,
+      max_multiplier: entry.max_multiplier || 1,
+      trail_reached: entry.trail_reached || 'Green'
+    }])
+
+  if (error) {
+    console.error('Error adding score:', error)
+    return null
+  }
+
+  // Return updated leaderboard
+  return getLeaderboard()
 }

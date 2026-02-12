@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Character } from './types/character';
-import { GameState } from './types/game';
+import { GameState, GameOverData } from './types/game';
 import { StartScreen } from './components/StartScreen';
 import { CharacterSelection } from './components/CharacterSelection';
 import { GameContainer } from './components/GameContainer';
@@ -9,9 +9,7 @@ import { GameOver } from './components/GameOver';
 function App() {
   const [gameState, setGameState] = useState<GameState>('menu');
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  const [finalScore, setFinalScore] = useState(0);
-  const [finalDistance, setFinalDistance] = useState(0);
-  const [landingAngle, setLandingAngle] = useState<number | undefined>(undefined);
+  const [gameOverData, setGameOverData] = useState<GameOverData | null>(null);
   const [gameKey, setGameKey] = useState(0); // Key that only changes on actual restart
 
   const handleCharacterSelect = (character: Character) => {
@@ -20,10 +18,8 @@ function App() {
     setGameKey(Date.now()); // New game instance
   };
 
-  const handleGameOver = useCallback((score: number, distance: number, angle?: number) => {
-    setFinalScore(score);
-    setFinalDistance(distance);
-    setLandingAngle(angle);
+  const handleGameOver = useCallback((data: GameOverData) => {
+    setGameOverData(data);
     setGameState('game-over');
   }, []);
 
@@ -60,11 +56,10 @@ function App() {
             character={selectedCharacter}
             onGameOver={handleGameOver}
           />
-          {gameState === 'game-over' && (
+          {gameState === 'game-over' && gameOverData && selectedCharacter && (
             <GameOver
-              score={finalScore}
-              distance={finalDistance}
-              landingAngle={landingAngle}
+              gameData={gameOverData}
+              characterName={selectedCharacter.name}
               onRestart={handleRestart}
               onBackToMenu={handleBackToMenu}
             />

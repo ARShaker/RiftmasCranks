@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { GameOverData } from '../types/game';
 import { getLeaderboard, isHighScore, addScore, LeaderboardEntry } from '../utils/leaderboard';
 
 interface GameOverProps {
-  score: number;
-  distance: number;
-  landingAngle?: number;
+  gameData: GameOverData;
+  characterName: string;
   onRestart: () => void;
   onBackToMenu: () => void;
 }
@@ -12,9 +12,8 @@ interface GameOverProps {
 const pixelFont = '"Press Start 2P", "Courier New", monospace';
 
 export const GameOver: React.FC<GameOverProps> = ({
-  score,
-  distance,
-  landingAngle,
+  gameData,
+  characterName,
   onRestart,
   onBackToMenu,
 }) => {
@@ -23,23 +22,57 @@ export const GameOver: React.FC<GameOverProps> = ({
   const [playerName, setPlayerName] = useState('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [newEntryIndex, setNewEntryIndex] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const currentLeaderboard = getLeaderboard();
-    setLeaderboard(currentLeaderboard);
-    setIsNewHighScore(isHighScore(score));
-  }, [score]);
+    const loadLeaderboard = async () => {
+      setIsLoading(true);
+      try {
+        const [currentLeaderboard, qualifiesForHighScore] = await Promise.all([
+          getLeaderboard(),
+          isHighScore(gameData.score)
+        ]);
+        setLeaderboard(currentLeaderboard);
+        setIsNewHighScore(qualifiesForHighScore);
+      } catch (error) {
+        console.error('Error loading leaderboard:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const handleSubmitScore = () => {
-    if (playerName.trim()) {
-      const updatedLeaderboard = addScore(playerName.trim(), score);
-      setLeaderboard(updatedLeaderboard);
-      setHasSubmitted(true);
-      // Find the index of the newly added score
-      const index = updatedLeaderboard.findIndex(
-        (entry) => entry.score === score && entry.name === playerName.trim()
-      );
-      setNewEntryIndex(index);
+    loadLeaderboard();
+  }, [gameData.score]);
+
+  const handleSubmitScore = async () => {
+    if (!playerName.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const updatedLeaderboard = await addScore({
+        player_name: playerName.trim(),
+        character_name: characterName,
+        score: gameData.score,
+        distance: gameData.distance,
+        tricks_completed: gameData.tricksCompleted,
+        max_multiplier: gameData.maxMultiplier,
+        trail_reached: gameData.trailReached
+      });
+
+      if (updatedLeaderboard) {
+        setLeaderboard(updatedLeaderboard);
+        setHasSubmitted(true);
+        // Find the index of the newly added score
+        const index = updatedLeaderboard.findIndex(
+          (entry) => entry.score === gameData.score && entry.player_name === playerName.trim()
+        );
+        setNewEntryIndex(index);
+      }
+    } catch (error) {
+      console.error('Error submitting score:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -83,7 +116,7 @@ export const GameOver: React.FC<GameOverProps> = ({
         minWidth: '300px',
         pointerEvents: 'auto',
       }}>
-        {landingAngle !== undefined && (
+        {gameData.landingAngle !== undefined && (
           <div style={{
             color: '#ff6b6b',
             fontSize: '10px',
@@ -91,7 +124,7 @@ export const GameOver: React.FC<GameOverProps> = ({
             textAlign: 'center',
             fontFamily: pixelFont,
           }}>
-            <strong>Landing Angle:</strong> {landingAngle.toFixed(1)}° (Max: 38°)
+            <strong>Landing Angle:</strong> {gameData.landingAngle.toFixed(1)}° (Max: 38°)
           </div>
         )}
         <div style={{
@@ -101,7 +134,7 @@ export const GameOver: React.FC<GameOverProps> = ({
           textAlign: 'center',
           fontFamily: pixelFont,
         }}>
-          <strong>Final Score:</strong> {score}
+          <strong>Final Score:</strong> {gameData.score}
         </div>
         <div style={{
           color: 'white',
@@ -109,7 +142,7 @@ export const GameOver: React.FC<GameOverProps> = ({
           textAlign: 'center',
           fontFamily: pixelFont,
         }}>
-          <strong>Distance:</strong> {distance}m
+          <strong>Distance:</strong> {gameData.distance}m
         </div>
       </div>
 
@@ -146,6 +179,7 @@ export const GameOver: React.FC<GameOverProps> = ({
               onKeyDown={handleKeyDown}
               placeholder="Name"
               maxLength={10}
+              disabled={isSubmitting}
               style={{
                 padding: '10px 15px',
                 fontSize: '12px',
@@ -154,24 +188,26 @@ export const GameOver: React.FC<GameOverProps> = ({
                 width: '120px',
                 textAlign: 'center',
                 fontFamily: pixelFont,
+                opacity: isSubmitting ? 0.5 : 1,
               }}
               autoFocus
             />
             <button
               onClick={handleSubmitScore}
+              disabled={isSubmitting}
               style={{
                 padding: '10px 20px',
                 fontSize: '10px',
-                backgroundColor: '#4ECDC4',
+                backgroundColor: isSubmitting ? '#888' : '#4ECDC4',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                cursor: 'pointer',
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
                 fontWeight: 'bold',
                 fontFamily: pixelFont,
               }}
             >
-              Submit
+              {isSubmitting ? '...' : 'Submit'}
             </button>
           </div>
         </div>
@@ -195,7 +231,16 @@ export const GameOver: React.FC<GameOverProps> = ({
         }}>
           Leaderboard
         </h2>
-        {leaderboard.length === 0 ? (
+        {isLoading ? (
+          <div style={{
+            color: '#aaa',
+            textAlign: 'center',
+            fontSize: '10px',
+            fontFamily: pixelFont,
+          }}>
+            Loading...
+          </div>
+        ) : leaderboard.length === 0 ? (
           <div style={{
             color: '#aaa',
             textAlign: 'center',
@@ -208,7 +253,7 @@ export const GameOver: React.FC<GameOverProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {leaderboard.map((entry, index) => (
               <div
-                key={`${entry.name}-${entry.score}-${index}`}
+                key={entry.id}
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -240,7 +285,7 @@ export const GameOver: React.FC<GameOverProps> = ({
                     fontSize: '10px',
                     fontFamily: pixelFont,
                   }}>
-                    {entry.name}
+                    {entry.player_name}
                   </span>
                 </div>
                 <span style={{
