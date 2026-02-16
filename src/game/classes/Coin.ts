@@ -1,18 +1,15 @@
 import Phaser from 'phaser';
-import { Terrain } from './Terrain';
 
 export class CoinManager {
   private scene: Phaser.Scene;
   private coins: Phaser.Physics.Arcade.Group;
-  private terrain?: Terrain;
   private spawnChance = 0.30; // 25% spawn rate
   private coinScale = 0.18; // Scale for the favicon image
   private floatOffset = 80; // How high above ground/obstacle the coin floats
   private spawnedPositions: Set<string> = new Set(); // Track where coins have been spawned
 
-  constructor(scene: Phaser.Scene, terrain?: Terrain) {
+  constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    this.terrain = terrain;
     this.coins = scene.physics.add.group({
       immovable: true,
       allowGravity: false,

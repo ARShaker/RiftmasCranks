@@ -193,8 +193,8 @@ export class GameScene extends Phaser.Scene {
     // Create terrain
     this.terrain = new Terrain(this);
 
-    // Create coin manager with terrain reference
-    this.coinManager = new CoinManager(this, this.terrain);
+    // Create coin manager
+    this.coinManager = new CoinManager(this);
 
     // Set coin manager on terrain for ramp coin spawning
     this.terrain.setCoinManager(this.coinManager);
@@ -839,8 +839,12 @@ export class GameScene extends Phaser.Scene {
             relativeAngle = 360 - relativeAngle;
           }
 
-          // Crash if landing more than 42° from perpendicular to slope
-          const isBadLanding = relativeAngle > 42;
+          // Skip crash check if player is near a ramp exit (within 100px buffer)
+          // This prevents false crashes when rolling off a ramp without jumping
+          const nearRamp = this.terrain.isOnRamp(playerPos.x, 100);
+
+          // Crash if landing more than 42° from perpendicular to slope (unless near ramp)
+          const isBadLanding = relativeAngle > 42 && !nearRamp;
 
           if (isBadLanding) {
             // Crashed! Game over - pass the relative angle for display
