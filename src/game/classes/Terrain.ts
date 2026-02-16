@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { CoinManager } from './Coin';
 
 export class Terrain {
   private scene: Phaser.Scene;
@@ -17,6 +18,7 @@ export class Terrain {
   private rampMaxDistance = 1600;
   private rampWidth = 150;
   private activeRamps: { start: number; end: number }[] = [];
+  private coinManager?: CoinManager;
 
   // Performance optimization: track if terrain needs redrawing
   private needsRedraw = true;
@@ -67,8 +69,12 @@ export class Terrain {
         this.activeRamps.push({ start: rampStart, end: rampEnd });
       }
 
-      // If we just finished the ramp, schedule the next one
+      // If we just finished the ramp, schedule the next one and try to spawn a coin
       if (x >= this.nextRampX + this.rampWidth - this.segmentWidth) {
+        // Try to spawn a coin at the edge of the ramp (20% chance)
+        if (this.coinManager) {
+          this.coinManager.trySpawnAtRampEdge(x, y);
+        }
         this.nextRampX = x + Phaser.Math.Between(this.rampMinDistance, this.rampMaxDistance);
         console.log(`Next ramp scheduled at x=${this.nextRampX}`);
       }
@@ -195,9 +201,23 @@ export class Terrain {
       }
     }
 
-    // If x is beyond our points, return the last point's y
-    const lastY = this.points[this.points.length - 1]?.y || this.baseY;
-    return lastY;
+    // If x is beyond our generated points, calculate what the terrain height WILL be
+    // using the same wave formula as addPoint() to ensure consistency
+    if (x > this.lastSegmentX) {
+      const wave1 = Math.sin((x + this.waveOffset) * 0.0008) * 250;
+      const wave2 = Math.sin((x + this.waveOffset) * 0.002) * 150;
+      const wave3 = Math.sin((x + this.waveOffset) * 0.005) * 80;
+      const wave4 = Math.sin((x + this.waveOffset) * 0.012) * 30;
+      return this.baseY - wave1 - wave2 - wave3 - wave4;
+    }
+
+    // If x is before our first point, return first point's y
+    if (this.points.length > 0 && x < this.points[0].x) {
+      return this.points[0].y;
+    }
+
+    // Fallback to baseY
+    return this.baseY;
   }
 
   public getPoints(): { x: number; y: number }[] {
@@ -207,6 +227,14 @@ export class Terrain {
   public checkCollision(playerX: number, playerY: number, playerHeight: number): boolean {
     const groundY = this.getGroundY(playerX);
     return playerY + playerHeight / 2 >= groundY;
+  }
+
+  public hasTerrainAt(x: number): boolean {
+    // Check if terrain points have been generated at this x position
+    if (this.points.length < 2) return false;
+    const firstX = this.points[0].x;
+    const lastX = this.points[this.points.length - 1].x;
+    return x >= firstX && x <= lastX;
   }
 
   public isOnRamp(x: number, buffer: number = 50): boolean {
@@ -222,5 +250,9 @@ export class Terrain {
   public cleanupRamps(cameraX: number): void {
     // Remove ramps that are far behind the camera
     this.activeRamps = this.activeRamps.filter(ramp => ramp.end > cameraX - 2000);
+  }
+
+  public setCoinManager(coinManager: CoinManager): void {
+    this.coinManager = coinManager;
   }
 }

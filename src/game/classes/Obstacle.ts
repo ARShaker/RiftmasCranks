@@ -1,14 +1,16 @@
 import Phaser from 'phaser';
 import { Terrain } from './Terrain';
+import { CoinManager } from './Coin';
 
 type ObstacleType = 'rock' | 'tree' | 'sign';
 
 export class ObstacleManager {
   private obstacles: Phaser.Physics.Arcade.Group;
   private lastObstacleX = 800;
-  private minDistance = 300;
-  private maxDistance = 700;
+  private minDistance = 270;
+  private maxDistance = 635;
   private terrain?: Terrain;
+  private coinManager?: CoinManager;
 
   // Base scales and collision box ratios for each obstacle type
   private obstacleConfig: Record<ObstacleType, { baseScale: number; scaleVariance: number; hitboxRatio: { width: number; height: number } }> = {
@@ -17,8 +19,9 @@ export class ObstacleManager {
     sign: { baseScale: 0.2, scaleVariance: 0.05, hitboxRatio: { width: 0.3, height: 0.8 } },
   };
 
-  constructor(scene: Phaser.Scene, terrain?: Terrain) {
+  constructor(scene: Phaser.Scene, terrain?: Terrain, coinManager?: CoinManager) {
     this.terrain = terrain;
+    this.coinManager = coinManager;
     this.obstacles = scene.physics.add.group({
       immovable: true,
       allowGravity: false,
@@ -77,6 +80,11 @@ export class ObstacleManager {
   private createObstacle(x: number, type: ObstacleType): void {
     if (!this.terrain) return;
 
+    // Ensure terrain is generated at this x position before spawning
+    if (!this.terrain.hasTerrainAt(x)) {
+      return;
+    }
+
     const config = this.obstacleConfig[type];
     const textureKey = `obstacle-${type}`;
 
@@ -110,6 +118,11 @@ export class ObstacleManager {
     const offsetX = (obstacle.width - hitboxWidth) / 2;
     const offsetY = obstacle.height - hitboxHeight;
     body.setOffset(offsetX, offsetY);
+
+    // Try to spawn a coin above this obstacle (20% chance)
+    if (this.coinManager) {
+      this.coinManager.trySpawnAboveObstacle(x, obstacle.y, obstacle.displayHeight);
+    }
   }
 
   public getObstacles(): Phaser.Physics.Arcade.Group {

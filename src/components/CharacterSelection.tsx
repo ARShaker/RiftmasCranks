@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Character } from '../types/character';
 import { characters } from '../data/characters';
+import { RulesPage } from './RulesPage';
 
 interface CharacterSelectionProps {
   onSelect: (character: Character) => void;
 }
 
 export const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onSelect }) => {
+  const [showRules, setShowRules] = useState(false);
+
+  if (showRules) {
+    return <RulesPage onBack={() => setShowRules(false)} />;
+  }
   // Split characters into two rows: 4 and 5
   const firstRow = characters.slice(0, 4);
   const secondRow = characters.slice(4, 9);
@@ -158,9 +164,39 @@ export const CharacterSelection: React.FC<CharacterSelectionProps> = ({ onSelect
       }}>
         <p><strong>Controls:</strong></p>
         <p>SPACEBAR - Jump | SHIFT - Speed Boost</p>
-        <p>W/UP - Flip | A/LEFT or D/RIGHT - Roll | S/DOWN - Fall Faster</p>
+        <p>A/LEFT or D/RIGHT - Roll | S/DOWN - Fall Faster</p>
         <p>Land 10 flips to unlock CRANK!</p>
       </div>
+
+      <button
+        onClick={() => setShowRules(true)}
+        style={{
+          marginTop: '20px',
+          padding: '10px 25px',
+          fontSize: '10px',
+          fontFamily: '"Press Start 2P", "Courier New", monospace',
+          backgroundColor: '#16213e',
+          color: '#aaa',
+          border: '2px solid #aaa',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          transition: 'transform 0.2s, box-shadow 0.2s, color 0.2s, border-color 0.2s',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 0 15px #FFD700';
+          e.currentTarget.style.color = '#FFD700';
+          e.currentTarget.style.borderColor = '#FFD700';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = 'none';
+          e.currentTarget.style.color = '#aaa';
+          e.currentTarget.style.borderColor = '#aaa';
+        }}
+      >
+        All Rules
+      </button>
     </div>
   );
 };

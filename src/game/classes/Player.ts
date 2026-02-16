@@ -112,8 +112,8 @@ export class Player {
 
       body.setGravityY(baseGravity * (gravityMultiplier - 1));
 
-      // Apply horizontal speed based on weight (heavier = faster)
-      let currentSpeed = this.baseSpeed * this.character.weight;
+      // Apply horizontal speed (flat for all characters)
+      let currentSpeed = this.baseSpeed;
 
       // Apply speed boost if active
       if (this.isSpeedBoosting) {
@@ -134,14 +134,10 @@ export class Player {
     if (!this.isGrounded) {
       this.activeTrickKeys.add(key);
 
-      // Rotate based on key - much faster rotation!
-      // Taller characters rotate slower (harder to complete tricks)
-      const rotationSpeed = 10 / this.character.height; // Doubled from 5 to 10
+      // Rotate based on key
+      const rotationSpeed = 8; // Flat rotation speed for all characters
 
       switch(key) {
-        case 'w': // Front flip
-          this.sprite.angle += rotationSpeed;
-          break;
         case 's': // Back flip
           this.sprite.angle -= rotationSpeed;
           break;

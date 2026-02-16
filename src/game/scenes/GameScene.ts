@@ -4,11 +4,13 @@ import { GameOverData, TrailType } from '../../types/game';
 import { Player } from '../classes/Player';
 import { Terrain } from '../classes/Terrain';
 import { ObstacleManager } from '../classes/Obstacle';
+import { CoinManager } from '../classes/Coin';
 
 export class GameScene extends Phaser.Scene {
   private player?: Player;
   private terrain?: Terrain;
   private obstacleManager?: ObstacleManager;
+  private coinManager?: CoinManager;
   private arrowKeys?: {
     up: Phaser.Input.Keyboard.Key;
     down: Phaser.Input.Keyboard.Key;
@@ -32,6 +34,7 @@ export class GameScene extends Phaser.Scene {
   private maxMultiplier = 1; // Track highest multiplier achieved
   private multiplierDecayTime = 0; // Time when multiplier should decay
   private multiplierDecayDuration = 10000; // 10 seconds in milliseconds
+  private pausedDecayTimeRemaining = 0; // Store remaining decay time when crank is active
   private airborneStartAngle = 0; // Track the angle when becoming airborne
   private lastFrameAngle = 0; // Track angle from previous frame to calculate delta
   private cumulativeRotation = 0; // Track total rotation since becoming airborne
@@ -47,10 +50,16 @@ export class GameScene extends Phaser.Scene {
   private timeToCrankText?: Phaser.GameObjects.Text;
   private crankOverlay?: Phaser.GameObjects.Rectangle;
   private crankImage?: Phaser.GameObjects.Image;
+  private crankMessageText?: Phaser.GameObjects.Text;
+  private crankBonusText?: Phaser.GameObjects.Text;
+  private crankTopGradient?: Phaser.GameObjects.Rectangle;
+  private crankBottomGradient?: Phaser.GameObjects.Rectangle;
+  private crankContinueText?: Phaser.GameObjects.Text;
+  private isCrankScreenActive = false;
 
   // Trail difficulty system
   private currentTrail: 'green' | 'blue' | 'black' = 'green';
-  private trailTransitionDistance = 500; // Distance in meters between trail changes
+  private trailTransitionDistance = 1000; // Distance in meters between trail changes
   private trailHeaderContainer?: Phaser.GameObjects.Container;
   private trailTintOverlay?: Phaser.GameObjects.Rectangle;
   private trailSpeedMultipliers = {
@@ -102,11 +111,14 @@ export class GameScene extends Phaser.Scene {
       this.load.image(`bg-layer-${i}`, `assets/background/${i}.png`);
     }
 
-    // Load character icons for crank graphics
+    // Load character crank images
     const characterNames = ['jamie', 'mack', 'dygs', 'dave', 'tommy', 'will', 'oliver', 'van', 'shaker'];
     characterNames.forEach(name => {
-      this.load.image(`crank-${name}`, `icons/${name}.png`);
+      this.load.image(`crank-${name}`, `assets/cranks/${name}_crank.png`);
     });
+
+    // Load coin image
+    this.load.image('coin', 'assets/singed_favicon.png');
   }
 
   public init(data?: {
@@ -181,8 +193,14 @@ export class GameScene extends Phaser.Scene {
     // Create terrain
     this.terrain = new Terrain(this);
 
-    // Create obstacle manager with terrain reference
-    this.obstacleManager = new ObstacleManager(this, this.terrain);
+    // Create coin manager with terrain reference
+    this.coinManager = new CoinManager(this, this.terrain);
+
+    // Set coin manager on terrain for ramp coin spawning
+    this.terrain.setCoinManager(this.coinManager);
+
+    // Create obstacle manager with terrain and coin manager references
+    this.obstacleManager = new ObstacleManager(this, this.terrain, this.coinManager);
 
     // Create player
     this.player = new Player(this, 200, 300, this.selectedCharacter);
@@ -207,6 +225,15 @@ export class GameScene extends Phaser.Scene {
       this.player.sprite,
       this.obstacleManager.getObstacles(),
       this.handleObstacleCollision,
+      undefined,
+      this
+    );
+
+    // Setup collision between player and coins
+    this.physics.add.overlap(
+      this.player.sprite,
+      this.coinManager.getCoins(),
+      (_player, coin) => this.handleCoinCollection(coin as Phaser.Physics.Arcade.Sprite),
       undefined,
       this
     );
@@ -236,8 +263,8 @@ export class GameScene extends Phaser.Scene {
   private createMultiplierBar(): void {
     const barWidth = 200;
     const barHeight = 20;
-    // Position on right side of screen
-    const barX = this.cameras.main.width - barWidth - 20;
+    // Position on right side of screen (with extra padding to avoid cutoff)
+    const barX = this.cameras.main.width - barWidth - 50;
     const barY = 160; // Position below score text
 
     // Background (dark)
@@ -413,7 +440,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createFlipCounterUI(): void {
-    const barX = this.cameras.main.width - 220;
+    const barX = this.cameras.main.width - 250;
     const barY = 190; // Position below multiplier bar
 
     // Flip counter text (X/10)
@@ -501,6 +528,12 @@ export class GameScene extends Phaser.Scene {
     if (!this.player || !this.selectedCharacter || !this.terrain || !this.obstacleManager) return;
 
     this.hasCrankedThisSession = true;
+    this.isCrankScreenActive = true;
+
+    // Pause the multiplier decay timer
+    if (this.multiplierDecayTime > 0) {
+      this.pausedDecayTimeRemaining = Math.max(0, this.multiplierDecayTime - this.time.now);
+    }
 
     // Add 1000 points
     this.score += 1000;
@@ -517,59 +550,87 @@ export class GameScene extends Phaser.Scene {
     const cameraX = this.cameras.main.scrollX;
     const cameraY = this.cameras.main.scrollY;
 
+    // Dark overlay behind the image
     this.crankOverlay = this.add.rectangle(
       cameraX + screenWidth / 2,
       cameraY + screenHeight / 2,
       screenWidth,
       screenHeight,
       0x000000,
-      0.7
+      1.0
     );
     this.crankOverlay.setDepth(2000);
+    this.crankOverlay.setScrollFactor(0);
 
-    // Show character image in center
+    // Show character crank image centered with buffer
     this.crankImage = this.add.image(
-      cameraX + screenWidth / 2,
-      cameraY + screenHeight / 2,
+      screenWidth / 2,
+      screenHeight / 2,
       `crank-${characterName}`
     );
     this.crankImage.setDepth(2001);
-    // Scale to fit nicely on screen (about 60% of screen height)
-    const targetHeight = screenHeight * 0.6;
-    const scale = targetHeight / this.crankImage.height;
-    this.crankImage.setScale(scale);
+    this.crankImage.setScrollFactor(0);
 
-    // Add "+1000" text above the image
-    const bonusText = this.add.text(
-      cameraX + screenWidth / 2,
-      cameraY + screenHeight / 2 - targetHeight / 2 - 50,
+    // Scale to fit within screen with 100px buffer on each side
+    const bufferSize = 100;
+    const availableWidth = screenWidth - bufferSize * 2;
+    const availableHeight = screenHeight - bufferSize * 2;
+    const scaleX = availableWidth / this.crankImage.width;
+    const scaleY = availableHeight / this.crankImage.height;
+    const fitScale = Math.min(scaleX, scaleY);
+    this.crankImage.setScale(fitScale);
+
+    // Add "+1000" text at top of screen
+    this.crankBonusText = this.add.text(
+      screenWidth / 2,
+      80,
       '+1000',
       {
-        fontSize: '64px',
+        fontSize: '72px',
         color: '#FFD700',
         fontStyle: 'bold',
         stroke: '#000000',
-        strokeThickness: 6,
+        strokeThickness: 8,
       }
     );
-    bonusText.setOrigin(0.5);
-    bonusText.setDepth(2002);
+    this.crankBonusText.setOrigin(0.5);
+    this.crankBonusText.setDepth(2003);
+    this.crankBonusText.setScrollFactor(0);
 
-    // Add "CRANK!" text below the image
-    const crankText = this.add.text(
-      cameraX + screenWidth / 2,
-      cameraY + screenHeight / 2 + targetHeight / 2 + 50,
-      'CRANK!',
+    // Add character's custom crank message at the bottom with flowing rainbow text
+    this.crankMessageText = this.add.text(
+      screenWidth / 2,
+      screenHeight - 120,
+      this.selectedCharacter.crankMessage,
       {
-        fontSize: '72px',
-        color: '#FF0000',
+        fontSize: '48px',
+        color: '#FFFFFF',
         fontStyle: 'bold',
         stroke: '#000000',
         strokeThickness: 6,
+        wordWrap: { width: screenWidth - 100, useAdvancedWrap: true },
+        align: 'center',
       }
     );
-    crankText.setOrigin(0.5);
-    crankText.setDepth(2002);
+    this.crankMessageText.setOrigin(0.5);
+    this.crankMessageText.setDepth(2003);
+    this.crankMessageText.setScrollFactor(0);
+
+    // Add "Press SPACE to continue" hint
+    this.crankContinueText = this.add.text(
+      screenWidth / 2,
+      screenHeight - 50,
+      'Press SPACE to continue',
+      {
+        fontSize: '20px',
+        color: '#AAAAAA',
+        stroke: '#000000',
+        strokeThickness: 3,
+      }
+    );
+    this.crankContinueText.setOrigin(0.5);
+    this.crankContinueText.setDepth(2003);
+    this.crankContinueText.setScrollFactor(0);
 
     // Pause physics
     this.physics.pause();
@@ -581,7 +642,7 @@ export class GameScene extends Phaser.Scene {
     const targetY = groundY - playerHeight / 2;
     const slopeAngle = this.getTerrainSlopeAngle(playerPos.x);
 
-    // Gently tween the player to the ground
+    // Gently tween the player to the ground (happens in background)
     this.tweens.add({
       targets: this.player.sprite,
       y: targetY,
@@ -589,31 +650,63 @@ export class GameScene extends Phaser.Scene {
       duration: 800,
       ease: 'Sine.easeInOut',
     });
+  }
 
-    // Resume after 1 second
-    this.time.delayedCall(1000, () => {
-      // Clean up overlay and images
-      if (this.crankOverlay) {
-        this.crankOverlay.destroy();
-        this.crankOverlay = undefined;
-      }
-      if (this.crankImage) {
-        this.crankImage.destroy();
-        this.crankImage = undefined;
-      }
-      bonusText.destroy();
-      crankText.destroy();
+  private dismissCrankScreen(): void {
+    if (!this.isCrankScreenActive) return;
 
-      // Set player as grounded and reset flip tracking
-      if (this.player) {
-        this.player.isGrounded = true;
-        this.flipsCompleted = 0;
-        this.cumulativeRotation = 0;
-      }
+    this.isCrankScreenActive = false;
 
-      // Resume physics
-      this.physics.resume();
-    });
+    // Clean up all crank UI elements
+    if (this.crankOverlay) {
+      this.crankOverlay.destroy();
+      this.crankOverlay = undefined;
+    }
+    if (this.crankImage) {
+      this.crankImage.destroy();
+      this.crankImage = undefined;
+    }
+    if (this.crankMessageText) {
+      this.crankMessageText.destroy();
+      this.crankMessageText = undefined;
+    }
+    if (this.crankBonusText) {
+      this.crankBonusText.destroy();
+      this.crankBonusText = undefined;
+    }
+    if (this.crankTopGradient) {
+      this.crankTopGradient.destroy();
+      this.crankTopGradient = undefined;
+    }
+    if (this.crankBottomGradient) {
+      this.crankBottomGradient.destroy();
+      this.crankBottomGradient = undefined;
+    }
+    if (this.crankContinueText) {
+      this.crankContinueText.destroy();
+      this.crankContinueText = undefined;
+    }
+
+    // Set player as grounded and reset flip tracking
+    if (this.player) {
+      this.player.isGrounded = true;
+      this.flipsCompleted = 0;
+      this.cumulativeRotation = 0;
+    }
+
+    // Reset flip counter so player can earn crank again
+    this.totalLandedFlips = 0;
+    this.canCrank = false;
+    this.hasCrankedThisSession = false;
+
+    // Restore the multiplier decay timer
+    if (this.pausedDecayTimeRemaining > 0) {
+      this.multiplierDecayTime = this.time.now + this.pausedDecayTimeRemaining;
+      this.pausedDecayTimeRemaining = 0;
+    }
+
+    // Resume physics
+    this.physics.resume();
   }
 
   private updateMultiplierBar(): void {
@@ -621,7 +714,7 @@ export class GameScene extends Phaser.Scene {
 
     const barWidth = 200;
     const barHeight = 20;
-    const barX = this.cameras.main.width - barWidth - 20;
+    const barX = this.cameras.main.width - barWidth - 50;
     const barY = 160;
 
     // Only update text if multiplier changed
@@ -666,22 +759,57 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  public update(): void {
+  public update(_time: number, delta: number): void {
+    // Normalize delta to 60fps (16.67ms per frame)
+    // This ensures consistent behavior regardless of actual framerate
+    const deltaMultiplier = delta / 16.667;
+    // Update crank message rainbow animation even when game is paused
+    if (this.isCrankScreenActive && this.crankMessageText) {
+      // Use pre-computed colors if available, otherwise generate on first use
+      if (this.rainbowColors.length === 0) {
+        for (let i = 0; i < 60; i++) {
+          const t = i / 10;
+          const r = Math.sin(t) * 127 + 128;
+          const g = Math.sin(t + 2) * 127 + 128;
+          const b = Math.sin(t + 4) * 127 + 128;
+          this.rainbowColors.push(Phaser.Display.Color.RGBToString(Math.floor(r), Math.floor(g), Math.floor(b), 255, '#'));
+        }
+      }
+
+      // Update rainbow color every 50ms
+      const now = this.time.now;
+      if (now - this.lastRainbowUpdateTime > 50) {
+        this.lastRainbowUpdateTime = now;
+        this.crankMessageText.setColor(this.rainbowColors[this.rainbowColorIndex]);
+        this.rainbowColorIndex = (this.rainbowColorIndex + 1) % this.rainbowColors.length;
+      }
+    }
+
     if (!this.player || !this.terrain || !this.obstacleManager || this.isGameOver) {
       return;
     }
 
-    // Update parallax background layers
+    // Don't update game while crank screen is active (except for spacebar handling above)
+    if (this.isCrankScreenActive) {
+      // Still handle spacebar to dismiss
+      if (Phaser.Input.Keyboard.JustDown(this.spaceKey!)) {
+        this.dismissCrankScreen();
+      }
+      return;
+    }
+
+    // Update parallax background layers (delta-time based)
     // Array order: index 0 = layer 5 (back, slowest), index 4 = layer 1 (front, fastest)
     for (let i = 0; i < this.bgLayers.length; i++) {
       const scrollSpeed = (5 - i) * 0.1; // Layer 5: 0.1, Layer 1: 0.5
-      this.bgLayers[i].tilePositionX += scrollSpeed;
+      this.bgLayers[i].tilePositionX += scrollSpeed * deltaMultiplier;
     }
 
     // Update terrain
     const playerPos = this.player.getPosition();
     this.terrain.update(playerPos.x);
     this.obstacleManager.update(playerPos.x);
+    this.coinManager?.update(playerPos.x);
 
     // Custom terrain collision with smoother landing - DO THIS FIRST
     const groundY = this.terrain.getGroundY(playerPos.x);
@@ -711,8 +839,8 @@ export class GameScene extends Phaser.Scene {
             relativeAngle = 360 - relativeAngle;
           }
 
-          // Crash if landing more than 38° from perpendicular to slope
-          const isBadLanding = relativeAngle > 38;
+          // Crash if landing more than 42° from perpendicular to slope
+          const isBadLanding = relativeAngle > 42;
 
           if (isBadLanding) {
             // Crashed! Game over - pass the relative angle for display
@@ -778,9 +906,14 @@ export class GameScene extends Phaser.Scene {
       this.player.sprite.setAngle(slopeAngle);
     }
 
-    // Handle spacebar - jump immediately on press
-    if (Phaser.Input.Keyboard.JustDown(this.spaceKey!)) {
-      if (this.player.isGrounded) {
+    // Handle spacebar or up arrow - jump immediately on press
+    const jumpKeyPressed = Phaser.Input.Keyboard.JustDown(this.spaceKey!) ||
+                          Phaser.Input.Keyboard.JustDown(this.arrowKeys!.up);
+    if (jumpKeyPressed) {
+      if (this.isCrankScreenActive) {
+        // Dismiss crank screen
+        this.dismissCrankScreen();
+      } else if (this.player.isGrounded) {
         // Jump immediately on press
         this.player.jump();
       } else if (this.canCrank && !this.hasCrankedThisSession) {
@@ -797,28 +930,24 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Handle rotation inputs in air (both WASD and arrow keys work the same)
+    // Delta-time based rotation for consistent speed regardless of framerate
     if (!this.player.isGrounded) {
-      // Taller characters rotate slower (harder to complete tricks)
-      const rotationSpeed = 10 / this.player.character.height;
+      const rotationSpeed = 8; // Flat rotation speed for all characters
 
-      // Check if any trick input is being pressed
+      // Check if any trick input is being pressed (up arrow is now jump, not spin)
       const isTrickInput =
-        (this.wasdKeys?.W.isDown || this.wasdKeys?.A.isDown || this.wasdKeys?.D.isDown) ||
-        (this.arrowKeys?.up.isDown || this.arrowKeys?.left.isDown || this.arrowKeys?.right.isDown);
+        (this.wasdKeys?.A.isDown || this.wasdKeys?.D.isDown) ||
+        (this.arrowKeys?.left.isDown || this.arrowKeys?.right.isDown);
 
       this.player.isDoingTrick = !!isTrickInput;
 
-      // W or Up = Front flip
-      if ((this.wasdKeys && this.wasdKeys.W.isDown) || (this.arrowKeys && this.arrowKeys.up.isDown)) {
-        this.player.sprite.angle += rotationSpeed;
-      }
       // A or Left = Roll left
       if ((this.wasdKeys && this.wasdKeys.A.isDown) || (this.arrowKeys && this.arrowKeys.left.isDown)) {
-        this.player.sprite.angle -= rotationSpeed * 0.5;
+        this.player.sprite.angle -= rotationSpeed * 0.5 * deltaMultiplier;
       }
       // D or Right = Roll right
       if ((this.wasdKeys && this.wasdKeys.D.isDown) || (this.arrowKeys && this.arrowKeys.right.isDown)) {
-        this.player.sprite.angle += rotationSpeed * 0.5;
+        this.player.sprite.angle += rotationSpeed * 0.5 * deltaMultiplier;
       }
     } else {
       this.player.isDoingTrick = false;
@@ -1001,6 +1130,16 @@ export class GameScene extends Phaser.Scene {
       console.log('Player hit an obstacle!');
       this.gameOver(-1); // Use -1 to indicate obstacle collision
     }
+  }
+
+  private handleCoinCollection(coin: Phaser.Physics.Arcade.Sprite): void {
+    if (!this.coinManager) return;
+
+    // Add 50 points to score
+    this.score += 50;
+
+    // Collect the coin (shows popup and destroys it)
+    this.coinManager.collectCoin(coin);
   }
 
   private gameOver(relativeAngle?: number): void {

@@ -8,6 +8,8 @@ export const characters: Character[] = [
     weight: 1.0,
     color: '#FF6B6B',
     icon: '/icons/jamie.png',
+    crankMessage: "Jim embraces his inner mountain guru and talks Dygs down the slopes! +1000 points.",
+    crankImage: '/assets/cranks/jamie_crank.png',
   },
   {
     id: 'friend2',
@@ -16,6 +18,8 @@ export const characters: Character[] = [
     weight: 1.0,
     color: '#4ECDC4',
     icon: '/icons/mack.png',
+    crankMessage: "Mack hits the all time Stewcrankerz slopes top speed after riding the ganj-ola! +1000 points.",
+    crankImage: '/assets/cranks/mack_crank.png',
   },
   {
     id: 'friend3',
@@ -24,6 +28,8 @@ export const characters: Character[] = [
     weight: 1.0,
     color: '#95E1D3',
     icon: '/icons/dygs.png',
+    crankMessage: "Dygs narrowly avoids deleting a French family on the slopes! +1000 points.",
+    crankImage: '/assets/cranks/dygs_crank.png',
   },
   {
     id: 'friend4',
@@ -32,6 +38,8 @@ export const characters: Character[] = [
     weight: 1.0,
     color: '#F38181',
     icon: '/icons/dave.png',
+    crankMessage: "Dave survives a harrowing hike through the woods at Loon! +1000 points.",
+    crankImage: '/assets/cranks/dave_crank.png',
   },
   {
     id: 'friend5',
@@ -40,6 +48,8 @@ export const characters: Character[] = [
     weight: 1.0,
     color: '#AA96DA',
     icon: '/icons/tommy.png',
+    crankMessage: "Tommy makes a group of strangers crash while looking at his cake fly past! +1000 points.",
+    crankImage: '/assets/cranks/tommy_crank.png',
   },
   {
     id: 'friend6',
@@ -48,6 +58,8 @@ export const characters: Character[] = [
     weight: 1.0,
     color: '#FFD93D',
     icon: '/icons/will.png',
+    crankMessage: "Will overcomes the Gumby allegations on the bunny hill! +1000 points.",
+    crankImage: '/assets/cranks/will_crank.png',
   },
   {
     id: 'friend7',
@@ -56,6 +68,8 @@ export const characters: Character[] = [
     weight: 1.0,
     color: '#6BCB77',
     icon: '/icons/oliver.png',
+    crankMessage: "Oliver laps the group and meets everyone at the bottom! +1000 points.",
+    crankImage: '/assets/cranks/oliver_crank.png',
   },
   {
     id: 'friend8',
@@ -64,6 +78,8 @@ export const characters: Character[] = [
     weight: 1.0,
     color: '#4D96FF',
     icon: '/icons/van.png',
+    crankMessage: "Van takes on the Killington park and hits a gnarly jump! +1000 points.",
+    crankImage: '/assets/cranks/van_crank.png',
   },
   {
     id: 'friend9',
@@ -72,5 +88,7 @@ export const characters: Character[] = [
     weight: 1.0,
     color: '#FF9F45',
     icon: '/icons/shaker.png',
+    crankMessage: "Shaker makes a fun game for the group! +1000 points.",
+    crankImage: '/assets/cranks/shaker_crank.png',
   },
 ];

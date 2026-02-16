@@ -124,7 +124,7 @@ export const GameOver: React.FC<GameOverProps> = ({
             textAlign: 'center',
             fontFamily: pixelFont,
           }}>
-            <strong>Landing Angle:</strong> {gameData.landingAngle.toFixed(1)}° (Max: 38°)
+            <strong>Landing Angle:</strong> {gameData.landingAngle.toFixed(1)}° (Max: 42°)
           </div>
         )}
         <div style={{
@@ -176,7 +176,12 @@ export const GameOver: React.FC<GameOverProps> = ({
               type="text"
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
-              onKeyDown={handleKeyDown}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                handleKeyDown(e);
+              }}
+              onKeyUp={(e) => e.stopPropagation()}
+              onKeyPress={(e) => e.stopPropagation()}
               placeholder="Name"
               maxLength={10}
               disabled={isSubmitting}
