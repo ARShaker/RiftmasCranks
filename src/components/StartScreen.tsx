@@ -182,11 +182,11 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
         {`
           @keyframes flyTowardsCamera {
             0% {
-              width: 3vw;
+              transform: translate(-50%, -50%) scale(1);
               opacity: 0.9;
             }
             100% {
-              width: 66vw;
+              transform: translate(-50%, -50%) scale(22);
               opacity: 0;
             }
           }
@@ -217,12 +217,12 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
               position: 'absolute',
               left: `${img.x}%`,
               top: `${img.y}%`,
-              transform: 'translate(-50%, -50%)',
               pointerEvents: 'none',
               animation: 'flyTowardsCamera 5s ease-in forwards',
               zIndex: 0,
               width: '3vw',
               height: 'auto',
+              willChange: 'transform, opacity',
             }}
           />
         ))}
