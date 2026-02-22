@@ -79,6 +79,9 @@ export class GameScene extends Phaser.Scene {
   private lastMultiplierBarPercent = -1;
   private lastMultiplierValue = -1;
 
+  // Score update timer (stored to pause during crank)
+  private scoreUpdateEvent?: Phaser.Time.TimerEvent;
+
   // Performance: pre-computed rainbow colors for crank text
   private rainbowColors: string[] = [];
   private rainbowColorIndex = 0;
@@ -239,7 +242,7 @@ export class GameScene extends Phaser.Scene {
     );
 
     // Add score update loop
-    this.time.addEvent({
+    this.scoreUpdateEvent = this.time.addEvent({
       delay: 100,
       callback: this.updateScore,
       callbackScope: this,
@@ -535,6 +538,11 @@ export class GameScene extends Phaser.Scene {
       this.pausedDecayTimeRemaining = Math.max(0, this.multiplierDecayTime - this.time.now);
     }
 
+    // Pause score update timer during crank screen
+    if (this.scoreUpdateEvent) {
+      this.scoreUpdateEvent.paused = true;
+    }
+
     // Add 1000 points
     this.score += 1000;
 
@@ -694,6 +702,12 @@ export class GameScene extends Phaser.Scene {
       this.cumulativeRotation = 0;
     }
 
+    // Resume score update timer and reset lastScoreTime to prevent accumulated time jump
+    if (this.scoreUpdateEvent) {
+      this.scoreUpdateEvent.paused = false;
+    }
+    this.lastScoreTime = this.time.now;
+
     // Reset flip counter so player can earn crank again
     this.totalLandedFlips = 0;
     this.canCrank = false;
@@ -843,8 +857,8 @@ export class GameScene extends Phaser.Scene {
           // This prevents false crashes when rolling off a ramp without jumping
           const nearRamp = this.terrain.isOnRamp(playerPos.x, 100);
 
-          // Crash if landing more than 42° from perpendicular to slope (unless near ramp)
-          const isBadLanding = relativeAngle > 42 && !nearRamp;
+          // Crash if landing more than 45° from perpendicular to slope (unless near ramp)
+          const isBadLanding = relativeAngle > 45 && !nearRamp;
 
           if (isBadLanding) {
             // Crashed! Game over - pass the relative angle for display

@@ -124,7 +124,7 @@ export const GameOver: React.FC<GameOverProps> = ({
             textAlign: 'center',
             fontFamily: pixelFont,
           }}>
-            <strong>Landing Angle:</strong> {gameData.landingAngle.toFixed(1)}° (Max: 42°)
+            <strong>Landing Angle:</strong> {gameData.landingAngle.toFixed(1)}° (Max: 45°)
           </div>
         )}
         <div style={{

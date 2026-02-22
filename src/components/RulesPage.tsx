@@ -64,7 +64,7 @@ export const RulesPage: React.FC<RulesPageProps> = ({ onBack }) => {
         <div style={sectionStyle}>
           <h2 style={headerStyle}>Landing</h2>
           <div style={textStyle}>
-            <p>You must land within 42 degrees of the terrain slope.</p>
+            <p>You must land within 45 degrees of the terrain slope.</p>
             <p>Landing at a steeper angle will cause a crash!</p>
             <p>The game calculates your angle relative to the slope, not absolute rotation.</p>
           </div>
